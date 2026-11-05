@@ -7,6 +7,10 @@ set -euo pipefail
 package=${1:?Usage: ci-build.sh PACKAGE}
 [[ $package =~ ^[a-z0-9][a-z0-9+_.-]*$ ]] || exit 2
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+# Minimal Arch images omit documentation via NoExtract. Validate the full
+# package payload rather than suppressing pacman -Qkk failures.
+grep -E '^[[:space:]]*NoExtract[[:space:]]*=' /etc/pacman.conf || true
+sed -i '/^[[:space:]]*NoExtract[[:space:]]*=/d' /etc/pacman.conf
 pacman -Syu --noconfirm --needed base-devel namcap desktop-file-utils sudo xorg-server-xvfb dbus ttf-dejavu xdotool mesa
 useradd -m builder
 printf 'builder ALL=(ALL) NOPASSWD: /usr/bin/pacman\n' > /etc/sudoers.d/builder

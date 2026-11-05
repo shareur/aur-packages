@@ -8,3 +8,7 @@
 __pycache__/
 *.pyc
 /agent.md
+/docs/zh-cn/AGENTS.md
+
+# Keep agent instructions local at any directory depth.
+[Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd]

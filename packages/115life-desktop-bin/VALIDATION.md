@@ -1,5 +1,7 @@
 # 验证记录（2026-11-05）
 
+以下为旧包 `115pan-bin` 的历史记录，包更名不会将历史测试自动视为新包已验证。
+
 ## 上游与环境
 
 - 本机：CachyOS x86_64，KDE Wayland；makepkg 已有，namcap 3.6.0-3 在项目 tools 目录中运行（本机 sudo 要求交互密码）。
@@ -35,3 +37,12 @@
 - 验证手动发布默认仅预览，Git checkout 保持干净；非法包名和错误 AUR origin 会拒绝。
 - ShellCheck、工作流 YAML 与内嵌 Bash 语法检查通过。GitHub CI 尚未远程执行。
 - 第一阶段停用自动发布；旧单包工作流移至 docs 下的 .disabled 模板。当前只保留 validate.yml 和 upstream.yml 为可执行工作流。
+
+## 更名为 115life-desktop-bin
+
+- 维护者邮箱改为 shareur@imyang.me；配方修订为 37.3.2-3。
+- 新包提供旧包名并与旧包冲突，便于同事务迁移；未添加 replaces，不主动替换系统软件包。
+- 新增 115life-desktop 启动入口，保留 115pan 与 115life 兼容命令。
+- 上游 DEB、版本和 SHA256 保持不变；未来浏览器配方将使用独立包名 115life-browser-bin。
+- 新包 37.3.2-3 的 makepkg 构建、SHA256、.SRCINFO 一致性、namcap（保留既有上游诊断）、桌面文件及 ShellCheck 检查已完成；校验产物含新启动入口和旧包 provides/conflicts 元数据。
+- 新包名的实际安装、迁移和 GUI 运行尚未执行；未修改宿主系统安装，尚未执行更名后的远程 CI。

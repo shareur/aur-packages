@@ -27,8 +27,8 @@ for package in "$@"; do
         namcap PKGBUILD "${archives[@]}" 2>&1 | tee "$reports/namcap.log"
         # Vendor /opt layout waiver is scoped to this package only.
         diagnostics=$(grep -E ' E: |^Error:|Traceback' "$reports/namcap.log" || true)
-        if [[ $package == 115pan-bin ]]; then
-            diagnostics=$(printf '%s\n' "$diagnostics" | grep -vFx "115pan-bin E: ELF files outside of a valid path ('opt/')." || true)
+        if [[ $package == 115life-desktop-bin ]]; then
+            diagnostics=$(printf '%s\n' "$diagnostics" | grep -vFx "115life-desktop-bin E: ELF files outside of a valid path ('opt/')." || true)
         fi
         [[ -z $diagnostics ]] || { printf '%s\n' "$diagnostics" >&2; exit 1; }
         if [[ -f check-package.sh ]]; then

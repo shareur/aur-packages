@@ -1,7 +1,7 @@
-pkgbase = 115pan-bin
+pkgbase = 115life-desktop-bin
 	pkgdesc = 115 Life official cloud storage desktop client (binary release)
 	pkgver = 37.3.2
-	pkgrel = 2
+	pkgrel = 3
 	url = https://115.com/
 	arch = x86_64
 	license = LicenseRef-115-Proprietary
@@ -27,9 +27,11 @@ pkgbase = 115pan-bin
 	depends = libglvnd
 	optdepends = lttng-ust: optional .NET tracing provider
 	optdepends = vulkan-icd-loader: optional Vulkan rendering backend
+	provides = 115pan-bin=37.3.2
+	conflicts = 115pan-bin
 	options = !strip
 	options = !debug
 	source = 115Life_37.3.2.deb::https://down.115.com/client/115pc/lin/115Life_37.3.2.deb
 	sha256sums = b6530f321787c5e7ea4c00ccd0bc6eee1d99b5997f8cda8f701d0dd00c022f7e
 
-pkgname = 115pan-bin
+pkgname = 115life-desktop-bin

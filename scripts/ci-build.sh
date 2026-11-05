@@ -25,12 +25,12 @@ for name in "${names[@]}"; do
     pacman -Qkk "$name" >> "$root/reports/$package/installed-files.txt"
 done
 # Additional GUI smoke check for the first package; generic packages need no GUI.
-if [[ $package == 115pan-bin ]]; then
+if [[ $package == 115life-desktop-bin ]]; then
     runuser -u builder -- timeout 45s dbus-run-session -- xvfb-run -a \
-        bash "$root/scripts/smoke-115pan.sh" > "$root/reports/$package/smoke.log" 2>&1
+        bash "$root/scripts/smoke-115life-desktop.sh" > "$root/reports/$package/smoke.log" 2>&1
 fi
 pacman -R --noconfirm "${names[@]}"
-if [[ $package == 115pan-bin ]]; then
-    [[ ! -e /opt/115life && ! -L /usr/bin/115pan && ! -L /usr/bin/115life ]]
+if [[ $package == 115life-desktop-bin ]]; then
+    [[ ! -e /opt/115life && ! -L /usr/bin/115life-desktop && ! -L /usr/bin/115pan && ! -L /usr/bin/115life ]]
     [[ ! -e /usr/share/applications/life115.desktop ]]
 fi

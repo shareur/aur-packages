@@ -77,12 +77,12 @@ jobs:
           printf '%s\n' "$AUR_KNOWN_HOSTS" > ~/.ssh/known_hosts
           export GIT_SSH_COMMAND='ssh -i ~/.ssh/aur -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes'
           trap 'shred -u ~/.ssh/aur' EXIT
-          git clone ssh://aur@aur.archlinux.org/115pan-bin.git /tmp/aur-package
+          git clone ssh://aur@aur.archlinux.org/115life-desktop-bin.git /tmp/aur-package
           cp PKGBUILD .SRCINFO /tmp/aur-package/
           cd /tmp/aur-package
           git config user.name "$AUR_GIT_NAME"
           git config user.email "$AUR_GIT_EMAIL"
           git add PKGBUILD .SRCINFO
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Update reviewed 115pan-bin recipe'
+          git commit -m 'Update reviewed 115life-desktop-bin recipe'
           git push origin HEAD:master

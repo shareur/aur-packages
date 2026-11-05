@@ -1,7 +1,7 @@
-# Maintainer: Yang <13814726+shareur@users.noreply.github.com>
-pkgname=115pan-bin
+# Maintainer: Yang <shareur@imyang.me>
+pkgname=115life-desktop-bin
 pkgver=37.3.2
-pkgrel=2
+pkgrel=3
 pkgdesc='115 Life official cloud storage desktop client (binary release)'
 arch=('x86_64')
 url='https://115.com/'
@@ -11,6 +11,9 @@ depends=('glibc' 'gcc-libs' 'zlib' 'gtk3' 'webkit2gtk-4.1' 'libsecret'
          'libx11' 'libice' 'libsm' 'libxrandr' 'libxi' 'libxext' 'libxcursor' 'libglvnd')
 optdepends=('lttng-ust: optional .NET tracing provider'
             'vulkan-icd-loader: optional Vulkan rendering backend')
+# Compatibility for installations made before the package rename.
+provides=("115pan-bin=$pkgver")
+conflicts=('115pan-bin')
 options=('!strip' '!debug')
 source=("115Life_${pkgver}.deb::https://down.115.com/client/115pc/lin/115Life_${pkgver}.deb")
 sha256sums=('b6530f321787c5e7ea4c00ccd0bc6eee1d99b5997f8cda8f701d0dd00c022f7e')
@@ -26,6 +29,7 @@ package() {
   install -d "$pkgdir/usr/bin" "$pkgdir/usr/share/licenses/$pkgname"
   # Recreate vendor link: DEB stores it as 0755, pacman expects 0777.
   ln -sf /opt/115life/Life115 "$pkgdir/usr/bin/115life"
+  ln -s /opt/115life/Life115 "$pkgdir/usr/bin/115life-desktop"
   ln -s /opt/115life/Life115 "$pkgdir/usr/bin/115pan"
   install -m644 "$pkgdir/usr/share/doc/115life/copyright" "$pkgdir/usr/share/licenses/$pkgname/copyright"
   cp -a "$pkgdir/opt/115life/Licenses/." "$pkgdir/usr/share/licenses/$pkgname/"

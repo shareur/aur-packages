@@ -33,7 +33,7 @@ if (parsed.scheme != "https" or parsed.netloc != "down.115.com"
         or parsed.path.rsplit("/", 1)[-1] != f"115Life_{version}.deb"):
     raise SystemExit("ERROR: official Life Linux metadata is unavailable/invalid; "
                      "cannot confirm latest version. Review https://115.com/ manually.")
-current = re.search(r"^pkgver=(.+)$", (Path(__file__).resolve().parents[1] / "packages/115pan-bin/PKGBUILD").read_text(), re.M)[1]
+current = re.search(r"^pkgver=(.+)$", (Path(__file__).resolve().parents[1] / "packages/115life-desktop-bin/PKGBUILD").read_text(), re.M)[1]
 print(json.dumps({"current": current, "upstream": version, "url": url,
                   "update_available": tuple(map(int, version.split("."))) >
                   tuple(map(int, current.split(".")))}, ensure_ascii=False))

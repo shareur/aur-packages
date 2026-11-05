@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run in a disposable desktop session; never log in to an account here.
 set -euo pipefail
-/usr/bin/115pan &
+/usr/bin/115life-desktop &
 client=$!
 # Invoked by the EXIT trap.
 # shellcheck disable=SC2329

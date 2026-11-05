@@ -1,0 +1,10 @@
+*.deb
+*.pkg.tar.*
+**/src/
+**/pkg/
+/inspection/
+/reports/
+/tools/
+__pycache__/
+*.pyc
+/agent.md

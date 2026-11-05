@@ -1,0 +1,88 @@
+name: Publish reviewed package recipe to AUR
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Full master commit SHA reviewed and tested on KDE'
+        required: true
+        type: string
+      kde_tested:
+        description: 'I verified menu, login window, file transfer, playback and uninstall on KDE'
+        required: true
+        default: false
+        type: boolean
+permissions:
+  contents: read
+concurrency:
+  group: aur-publish
+  cancel-in-progress: false
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require master, exact reviewed commit, KDE signoff and protected environment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+          REVIEWED_SHA: ${{ inputs.commit }}
+          KDE_TESTED: ${{ inputs.kde_tested }}
+          ENABLED: ${{ vars.AUR_PUBLISH_ENABLED }}
+        run: |
+          set -euo pipefail
+          test "$REF" = refs/heads/master
+          test "$REVIEWED_SHA" = "$SHA"
+          test "$KDE_TESTED" = true
+          test "$ENABLED" = true
+          curl --fail --silent --show-error             -H "Authorization: Bearer $GH_TOKEN"             -H 'Accept: application/vnd.github+json'             "https://api.github.com/repos/$REPOSITORY/environments/aur-publish" > environment.json
+          python3 - <<'CHECK'
+          import json
+          data = json.load(open('environment.json'))
+          rules = data.get('protection_rules', [])
+          assert any(r['type'] == 'required_reviewers' and r.get('reviewers')
+                     and r.get('prevent_self_review') for r in rules), 'Required independent reviewers missing'
+          assert data.get('can_admins_bypass') is False, 'Disable administrator bypass'
+          CHECK
+  build:
+    needs: preflight
+    uses: ./.github/workflows/build.yml
+  publish:
+    needs: [preflight, build]
+    runs-on: ubuntu-latest
+    environment: aur-publish
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Push recipe only after environment approval
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          AUR_KNOWN_HOSTS: ${{ secrets.AUR_KNOWN_HOSTS }}
+          AUR_GIT_NAME: ${{ vars.AUR_GIT_NAME }}
+          AUR_GIT_EMAIL: ${{ vars.AUR_GIT_EMAIL }}
+        run: |
+          set -euo pipefail
+          if grep -q 'set your name and email' PKGBUILD; then
+            echo 'Fill in the PKGBUILD Maintainer before publishing.' >&2
+            exit 1
+          fi
+          test -n "$AUR_SSH_PRIVATE_KEY"
+          test -n "$AUR_KNOWN_HOSTS"
+          test -n "$AUR_GIT_NAME"
+          test -n "$AUR_GIT_EMAIL"
+          install -d -m700 ~/.ssh
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          printf '%s\n' "$AUR_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          export GIT_SSH_COMMAND='ssh -i ~/.ssh/aur -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes'
+          trap 'shred -u ~/.ssh/aur' EXIT
+          git clone ssh://aur@aur.archlinux.org/115pan-bin.git /tmp/aur-package
+          cp PKGBUILD .SRCINFO /tmp/aur-package/
+          cd /tmp/aur-package
+          git config user.name "$AUR_GIT_NAME"
+          git config user.email "$AUR_GIT_EMAIL"
+          git add PKGBUILD .SRCINFO
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Update reviewed 115pan-bin recipe'
+          git push origin HEAD:master

@@ -1,0 +1,51 @@
+name: Validate AUR packages
+on:
+  push:
+    branches: [master]
+    paths: ['packages/**', 'scripts/**', '.github/workflows/**']
+  pull_request:
+    paths: ['packages/**', 'scripts/**', '.github/workflows/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  select:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.packages.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: packages
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          matrix=$(python3 scripts/changed-packages.py --base "$BASE")
+          printf 'matrix=%s\n' "$matrix" >> "$GITHUB_OUTPUT"
+  validate:
+    needs: select
+    if: ${{ join(fromJSON(needs.select.outputs.matrix).package, '') != '' }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Build, lint, install, smoke-test and remove in disposable container
+        env:
+          PACKAGE: ${{ matrix.package }}
+          AUR_DISPOSABLE_BUILD: "1"
+        run: bash scripts/ci-build.sh "$PACKAGE"
+      - name: Upload reports only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: validation-${{ matrix.package }}
+          path: reports/${{ matrix.package }}/
+          retention-days: 14

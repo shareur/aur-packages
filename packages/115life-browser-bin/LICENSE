@@ -1,0 +1,13 @@
+115 Browser upstream license information
+
+115 Browser is distributed as an official vendor binary by 115.
+Upstream: https://pc.115.com/
+Copyright information: https://115.com/copyright.html
+
+The supplied DEB contains no standalone license/copyright/third-party notice file.
+Consult the vendor terms and the browser's chrome://credits page for upstream and
+third-party license information. This file records that limitation; it does not
+grant a license or permission to redistribute the vendor binary.
+
+The MIT license of the packaging repository applies only to repository-authored
+packaging files, not to 115 Browser or its bundled components.

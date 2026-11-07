@@ -1,0 +1,64 @@
+# Maintainer: Yang <shareur@imyang.me>
+pkgname=rustdesk-unattended-wayland
+pkgver=1.5.1
+pkgrel=1
+pkgdesc='RustDesk remote desktop client packaged for unattended access on Wayland (binary release)'
+arch=('x86_64')
+url='https://rustdesk.com/'
+license=('AGPL-3.0-only')
+depends=('glibc' 'gcc-libs' 'zlib' 'glib2' 'gtk3' 'gdk-pixbuf2' 'pango' 'cairo'
+         'at-spi2-core' 'libepoxy' 'fontconfig' 'hicolor-icon-theme' 'dbus'
+         'libpulse' 'gstreamer' 'gst-plugins-base' 'gst-plugin-pipewire'
+         'libx11' 'libxfixes' 'libxi' 'libxtst' 'libxcb' 'libxkbcommon'
+         'libxkbcommon-x11' 'wayland' 'libdrm' 'libva' 'libglvnd' 'xdotool'
+         'procps-ng')
+optdepends=('libayatana-appindicator: system tray icon (Ayatana AppIndicator)'
+            'libappindicator-gtk3: system tray icon (legacy AppIndicator)'
+            'xdg-desktop-portal: PipeWire/portal screen capture when DRM capture is unavailable'
+            'libvpl: Intel oneVPL hardware encoding'
+            'intel-media-sdk: legacy Intel Media SDK (libmfx) hardware encoding'
+            'nvidia-utils: NVIDIA NVENC/NVDEC hardware codec support')
+# Upstream's control data declares Provides/Conflicts/Replaces: rustdesk.
+provides=('rustdesk')
+conflicts=('rustdesk')
+options=('!strip' '!debug')
+source=("rustdesk-unattended-wayland-${pkgver}-x86_64.deb::https://github.com/rustdesk/rustdesk/releases/download/${pkgver}/rustdesk-unattended-wayland-${pkgver}-x86_64.deb")
+sha256sums=('f7760dad505b5eca1e99531f15b4de21e83acc7dbfce77a3ba456ef2afb0e961')
+
+prepare() {
+  # makepkg unpacks the .deb with bsdtar, leaving data.tar.xz and the control
+  # members in $srcdir; stage only the payload.
+  install -d vendor
+  bsdtar --no-same-owner -xf data.tar.xz -C vendor
+}
+
+package() {
+  # The vendor app tree lives in /usr/share/rustdesk, which is not a valid location
+  # for ELF files. It is installed to /usr/lib/rustdesk instead; the internal layout
+  # (launcher, lib/, data/) is unchanged, so the $ORIGIN/lib runpath still resolves,
+  # and librustdesk.so finds its hardcoded /usr/lib/rustdesk/libdrmtap.so.0.
+  install -d "$pkgdir/usr/lib/rustdesk"
+  cp -a "$srcdir/vendor/usr/share/rustdesk/." "$pkgdir/usr/lib/rustdesk/"
+  cp -a "$srcdir/vendor/usr/lib/rustdesk/." "$pkgdir/usr/lib/rustdesk/"
+
+  install -Dm644 "$srcdir/vendor/usr/share/applications/rustdesk.desktop" \
+    "$pkgdir/usr/share/applications/rustdesk.desktop"
+  install -Dm644 "$srcdir/vendor/usr/share/applications/rustdesk-link.desktop" \
+    "$pkgdir/usr/share/applications/rustdesk-link.desktop"
+  install -Dm644 "$srcdir/vendor/usr/share/icons/hicolor/256x256/apps/rustdesk.png" \
+    "$pkgdir/usr/share/icons/hicolor/256x256/apps/rustdesk.png"
+  install -Dm644 "$srcdir/vendor/usr/share/icons/hicolor/scalable/apps/rustdesk.svg" \
+    "$pkgdir/usr/share/icons/hicolor/scalable/apps/rustdesk.svg"
+
+  # Debian postinst creates this launcher; replicate it instead of running maintainer scripts.
+  install -d "$pkgdir/usr/bin"
+  ln -s /usr/lib/rustdesk/rustdesk "$pkgdir/usr/bin/rustdesk"
+
+  # postinst installs the unit on Debian. Ship it but leave it disabled: enabling a
+  # root remote-desktop service stays a documented, explicit administrative step.
+  # systemd rejects non-absolute Exec paths, so pin pkill exactly as postinst does.
+  install -Dm644 "$srcdir/vendor/usr/share/rustdesk/files/systemd/rustdesk.service" \
+    "$pkgdir/usr/lib/systemd/system/rustdesk.service"
+  sed -i 's|^ExecStop=pkill |ExecStop=/usr/bin/pkill |' \
+    "$pkgdir/usr/lib/systemd/system/rustdesk.service"
+}

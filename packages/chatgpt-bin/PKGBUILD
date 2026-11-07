@@ -1,0 +1,48 @@
+# Maintainer: Yang <shareur@imyang.me>
+pkgname=chatgpt-bin
+pkgver=26.1029.61003
+pkgrel=1
+pkgdesc='ChatGPT desktop app by OpenAI, Chromium-based (official Linux build, binary release)'
+arch=('x86_64')
+url='https://developers.openai.com/codex/app'
+license=('LicenseRef-proprietary')
+depends=('glibc' 'gcc-libs' 'alsa-lib' 'at-spi2-core' 'cairo' 'libcups' 'dbus' 'expat'
+         'glib2' 'gtk3' 'gdk-pixbuf2' 'pango' 'mesa' 'nspr' 'nss' 'systemd-libs'
+         'libx11' 'libxcb' 'libxcomposite' 'libxdamage' 'libxext' 'libxfixes'
+         'libxkbcommon' 'libxrandr' 'libglvnd' 'vulkan-icd-loader' 'libnotify'
+         'libpulse' 'libpipewire' 'tpm2-tss' 'libusb' 'xdg-utils' 'xz')
+optdepends=('git: version control support in the Codex agent'
+            'python: Python code execution tool in the Codex agent'
+            'qt5-base: optional Qt 5 desktop integration shim'
+            'qt6-base: optional Qt 6 desktop integration shim'
+            'nvidia-utils: NVIDIA GLX/Vulkan driver support')
+# The vendor DEB identifies itself as "chatgpt".
+provides=('chatgpt')
+conflicts=('chatgpt')
+options=('!strip' '!debug')
+# Vendor AppArmor profile: only grants unprivileged user namespaces to this binary
+# (needed where the distribution restricts them). Shipping it in /etc requires the
+# backup array; it is not loaded or modified by any install script.
+backup=('etc/apparmor.d/chatgpt')
+# Upstream offers a floating /latest/ alias; the pool path below is the same file
+# with the version pinned, so checksum changes are always a deliberate pkgver bump.
+source=("https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${pkgver}_amd64.deb")
+sha256sums=('f3af8afec5d25c228eb6f4dbd9cfde0fea7ca5e4b42aff0145a1ded273d01b2d')
+
+prepare() {
+  # makepkg unpacks the .deb with bsdtar, leaving data.tar.xz and the control
+  # members in $srcdir; stage only the payload.
+  install -d vendor
+  bsdtar --no-same-owner -xf data.tar.xz -C vendor
+}
+
+package() {
+  # The app already installs to /usr/lib/chatgpt and needs no path relocation.
+  cp -a "$srcdir/vendor/." "$pkgdir/"
+
+  # Debian-only metadata: keep the vendor copyright notice at the Arch license
+  # location and drop /usr/share/doc plus the lintian override.
+  install -Dm644 "$pkgdir/usr/share/doc/chatgpt/copyright" \
+    "$pkgdir/usr/share/licenses/$pkgname/copyright"
+  rm -rf "$pkgdir/usr/share/doc" "$pkgdir/usr/share/lintian"
+}

@@ -1,0 +1,45 @@
+# Maintainer: Yang <shareur@imyang.me>
+pkgname=115life-browser-bin
+pkgver=36.0.1
+pkgrel=1
+pkgdesc='115 Browser official Chromium-based browser (binary release)'
+arch=('x86_64')
+url='https://pc.115.com/'
+license=('LicenseRef-115-Proprietary')
+depends=('glibc' 'gcc-libs' 'alsa-lib' 'at-spi2-core' 'ca-certificates'
+         'cairo' 'dbus' 'expat' 'glib2' 'gtk3' 'libcups' 'libdrm' 'libidn2'
+         'libx11' 'libxcb' 'libxcomposite' 'libxdamage' 'libxext' 'libxfixes'
+         'libxkbcommon' 'libxrandr' 'mesa' 'nspr' 'nss' 'pango' 'zlib'
+         'ttf-liberation' 'xdg-utils' 'hicolor-icon-theme')
+optdepends=('qt5-base: optional Qt 5 desktop integration shim'
+            'qt6-base: optional Qt 6 desktop integration shim')
+options=('!strip' '!debug')
+source=("115br_v${pkgver}.deb::https://down.115.com/client/115pc/lin/115br_v${pkgver}.deb"
+        'LICENSE')
+sha256sums=('a26f84625b5c1ca1a7f6e2eb5a89327c49627fb7f04db1b71e27c48904b88d8b'
+            'a0245c89ef55d2380d192ebf708021461f3e4b8862c35a9c5ba8b7ad65404cfb')
+
+prepare() {
+  install -d "$srcdir/vendor"
+  bsdtar --no-same-owner -xf data.tar.xz -C "$srcdir/vendor"
+}
+
+package() {
+  local vendor="$srcdir/vendor/usr/local/115Browser"
+  install -d "$pkgdir/opt/115Browser" "$pkgdir/usr/bin"
+  cp -a "$vendor/." "$pkgdir/opt/115Browser/"
+  # Arch packages must not install into /usr/local.
+  sed -i 's|^APP_DIR=.*|APP_DIR=/opt/115Browser|' "$pkgdir/opt/115Browser/115.sh"
+  chmod 755 "$pkgdir/opt/115Browser/115.sh" "$pkgdir/opt/115Browser/115Browser"
+  # Match the vendor postinst without executing it; retain Chromium sandboxing.
+  chmod 4755 "$pkgdir/opt/115Browser/chrome-sandbox"
+  ln -s /opt/115Browser/115.sh "$pkgdir/usr/bin/115life-browser"
+  install -Dm644 "$srcdir/vendor/usr/share/applications/115Browser.desktop" \
+    "$pkgdir/usr/share/applications/115Browser.desktop"
+  sed -i -e 's|^Exec=.*|Exec=/usr/bin/115life-browser %U|' \
+    -e 's|^Icon=.*|Icon=115life-browser|' \
+    "$pkgdir/usr/share/applications/115Browser.desktop"
+  install -Dm644 "$vendor/res/115Browser.png" \
+    "$pkgdir/usr/share/icons/hicolor/256x256/apps/115life-browser.png"
+  install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

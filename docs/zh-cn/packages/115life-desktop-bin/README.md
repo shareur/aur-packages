@@ -27,7 +27,7 @@ bash ../../scripts/test-local-install.sh 115life-desktop-bin
 
 验证包括 SHA256、makepkg、`.SRCINFO` 一致性、namcap、桌面文件格式与文件清单。日志在仓库根目录的 `reports/115life-desktop-bin/`。人工检查菜单、登录、上传下载、播放、托盘和协议打开；CI 的 Xvfb 冒烟测试不能替代 KDE 桌面测试。
 
-namcap 对官方 `/opt/115life` 布局报 `ELF files outside of a valid path ('opt/').`，这是本项目唯一允许的错误诊断：保留厂商绝对路径、桌面 ID 和 app-local .NET/ICU 布局，避免破坏客户端内部路径。其余 E 诊断会阻止 CI。RELRO、多余库和“依赖可能不需要”警告来自厂商二进制及 .NET/PInvoke 动态加载；不通过删除运行库或改写二进制来消除。`liblttng-ust.so.0` 用于可选 .NET 跟踪，见 optdepends。完整分析见 [VALIDATION.md](../../../../packages/115life-desktop-bin/VALIDATION.md)。
+namcap 对官方 `/opt/115life` 布局报 `ELF files outside of a valid path ('opt/').`，这是本项目唯一允许的错误诊断：保留厂商绝对路径、桌面 ID 和 app-local .NET/ICU 布局，避免破坏客户端内部路径。其余 E 诊断会阻止 CI。RELRO、多余库和“依赖可能不需要”警告来自厂商二进制及 .NET/PInvoke 动态加载；不通过删除运行库或改写二进制来消除。`liblttng-ust.so.0` 用于可选 .NET 跟踪，见 optdepends。完整分析见 [VALIDATION.md](VALIDATION.md)。
 
 ## 维护与 CI
 

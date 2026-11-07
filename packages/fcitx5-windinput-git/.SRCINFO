@@ -1,0 +1,47 @@
+pkgbase = fcitx5-windinput-git
+	pkgdesc = 清风输入法 WindInput — Fcitx5 输入法引擎（Rust 服务 + 自绘候选窗，源码构建）
+	pkgver = 0.130.1.r41.gc70da4c
+	pkgrel = 1
+	url = https://windinput.com
+	arch = x86_64
+	license = GPL-3.0-or-later
+	makedepends = rust
+	makedepends = cmake
+	makedepends = pkgconf
+	makedepends = git
+	makedepends = curl
+	makedepends = python
+	makedepends = fcitx5
+	makedepends = libxcb
+	makedepends = wayland
+	makedepends = glib2
+	makedepends = fontconfig
+	depends = glibc
+	depends = gcc-libs
+	depends = fcitx5
+	depends = libxcb
+	depends = wayland
+	depends = glib2
+	depends = fontconfig
+	depends = libxkbcommon
+	depends = hicolor-icon-theme
+	optdepends = fcitx5-gtk: GTK 应用的输入法前端
+	optdepends = fcitx5-qt: Qt 应用的输入法前端
+	optdepends = xclip: X11 会话下读写剪贴板
+	optdepends = wl-clipboard: Wayland 会话下读写剪贴板
+	optdepends = xdg-utils: 打开链接/路径
+	optdepends = xdg-desktop-portal: 设置程序的文件对话框
+	optdepends = zenity: 文件对话框回退（无门户时）
+	optdepends = noto-fonts-cjk: 中文候选字体
+	optdepends = noto-fonts-emoji: emoji 候选字形
+	provides = fcitx5-windinput
+	conflicts = fcitx5-windinput-bin
+	options = !lto
+	source = WindInput::git+https://github.com/huanfeng/WindInput.git#branch=main
+	source = wind-setting::git+https://github.com/huanfeng/wind-setting.git#branch=main
+	source = wind-ui-rust::git+https://github.com/huanfeng/wind-ui-rust.git#branch=main
+	sha256sums = SKIP
+	sha256sums = SKIP
+	sha256sums = SKIP
+
+pkgname = fcitx5-windinput-git

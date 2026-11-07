@@ -1,0 +1,7 @@
+# makepkg build trees and VCS mirror caches (SRCDEST defaults to the package dir)
+/src/
+/pkg/
+/WindInput/
+/wind-setting/
+/wind-ui-rust/
+*.pkg.tar.*

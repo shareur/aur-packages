@@ -1,0 +1,14 @@
+# 验证记录：fcitx5-windinput-git 0.130.1.r41.gc70da4c-1
+
+- 上游：huanfeng/WindInput 的 main 分支。最新发布 tag 为 v0.130.1（be9347de）；本次构建为 main HEAD c70da4c，领先 41 个提交。由 git describe 得到 pkgver 0.130.1.r41.gc70da4c。
+- 配套源码：huanfeng/wind-setting 与 huanfeng/wind-ui-rust（main 分支）。wind_setting 是独立仓库，其 Cargo.toml 以 path 依赖 ../wind-ui-rust 与 ../WindInput/wind_input/crates/*，因此三者必须以兄弟目录并存。
+- 运行时词库不在上游 Git 树中。scripts/dev.sh gd 在构建期从 gaboolic/rime-frost、mozillazg/pinyin-data、BYVoid/OpenCC、KyleBing/rime-wubi86-jidian（以及可选的 rime-stroke、rime-emoji、Unicode CLDR）下载词库，再用 wind-tools 的 Rust 工具与 scripts/comment_dicts（python3）生成派生表。这些 URL 未固定 commit，故构建不可复现；已在包 README 中注明。
+- 构建环境：CachyOS x86_64，fcitx5 5.1.23-1.1（Arch 头文件需 C++20，addon 的 CMake 自动探测并升级），cmake 4.4.5，gcc 16.2.1，python 3.14.9。rustc 与 cargo 1.99.1 通过 rustup 安装到用户目录，因为 pacman 的 rust 包需要交互式密码才能安装。
+- 实际命令：makepkg --nodeps --force --noconfirm。用 nodeps 是因为 rust 由 rustup 提供而非 pacman 包，且缺少 ninja/namcap。CMake 使用默认 Make 生成器；配方不要求 ninja。
+- 构建结果：gen-data 组装出 build_dev/data（92 个文件，43176522 字节）。wind_service（二进制 wind_input）、wind_setting 与 C++ addon 均构建成功。包文件 fcitx5-windinput-git-0.130.1.r41.gc70da4c-1-x86_64.pkg.tar.zst 为 32787043 字节；安装体积按 du 为 82050470 字节，按 PKGINFO 为 81970270 字节。
+- 发现并修复的链接问题：本机 makepkg 的 OPTIONS 含 lto，/usr/share/makepkg/buildenv/lto.sh 会把 -flto=auto 追加到 CFLAGS/CXXFLAGS/LDFLAGS。cc crate 因此把 ring（设置程序经 rustls 与 ureq 使用的 TLS 栈）编成 GCC LTO 目标，而 rustc 链接不带 -flto，链接器报 ring_core_0_17_14 符号未定义。在 PKGBUILD 加 options 含 !lto 后修复。Rust 的 -C lto 不受该选项影响（默认本就关闭）。手动在不设 CFLAGS 的情况下 cargo build wind_setting 能成功链接，确认了上述原因。
+- check-package.sh：退出码 0。校验了 usr/lib/fcitx5/libwindinput.so、addon 描述 Library=libwindinput、输入法描述 Addon=windinput、私有负载路径、零内置规则的 compat.toml、至少一张非空 OpenCC octrie，以及词库体积：base.dict.yaml 9937947、8105.dict.yaml 99367、en.dict.yaml 339551、pinyin_map.txt 963878、wubi86_jidian.dict.yaml 1439572、wubi86_jidian_extra.dict.yaml 32432、wubi86_jidian_extra_district.dict.yaml 87886、comments zh_en.txt 4257010。desktop-file-validate 仅给出一条提示：windinput-setting.desktop 的 Categories 含两个主分类。
+- ELF NEEDED：wind_input 需要 libgcc_s、libm、libc；wind_setting 需要 libgcc_s、libm、libc（windui 动态打开 fontconfig、xkbcommon 与显示相关库）；libwindinput.so 需要 libFcitx5Core.so.7、libFcitx5Config.so.6、libFcitx5Utils.so.2、libxcb、libxcb-shape、libxcb-randr、libwayland-client、libgio-2.0、libgobject-2.0、libglib-2.0、libstdc++、libm、libgcc_s、libc。ldd 对三者均无缺失库。声明的 depends（fcitx5、libxcb、wayland、glib2、glibc、gcc-libs）覆盖 NEEDED 集合；fontconfig 与 libxkbcommon 因为动态打开而声明。
+- 因为构建时存在 gio-2.0，GNOME Shell 光标扩展装到 usr/share/gnome-shell/extensions/windinput-caret@windinput。只安装，不启用。
+- 未运行：整体 scripts/validate.sh、namcap、scripts/test-local-install.sh。validate.sh 以 pacman 包检查依赖并运行 namcap，test-local-install.sh 通过 sudo 安装到宿主；二者在无法安装 root 包时都跑不了。这些留给 CI 的 archlinux base-devel 容器。
+- 未测试：经 Fcitx5 的实际交互输入、X11 与 Wayland 候选窗渲染、GNOME Shell 扩展启用、桌面会话集成、Fcitx5 运行中升级的行为、以及可复现构建。

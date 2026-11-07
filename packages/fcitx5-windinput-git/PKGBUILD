@@ -1,0 +1,120 @@
+# Maintainer: Yang <shareur@imyang.me>
+#
+# 清风输入法 WindInput — 从源码构建的 Fcitx5 输入法引擎（预览版）。
+#
+# 上游运行形态与官方 .deb 一致：Rust 服务 wind_input（引擎/词库/候选渲染）+
+# Fcitx5 addon libwindinput.so（与应用对接）+ 图形设置程序 wind_setting + 运行时
+# 数据目录 data/。服务在可执行文件同目录找 data/，故与 .deb 一样装到
+# /usr/lib/windinput/；addon 走标准 ${libdir}/fcitx5，由 Fcitx5 加载。
+#
+# 设置程序在其独立仓库 wind-setting，经 path 依赖 ../wind-ui-rust 与
+# ../WindInput/wind_input/crates/*。makepkg 把各 source 解到 $srcdir 同级，
+# 正好满足该兄弟目录布局。
+#
+# 运行时数据（拼音/五笔词库、简繁转换表、注音反查表、释义词库）由上游
+# scripts/dev.sh gd 在构建期组装；它从若干上游仓库下载原始词库，
+# **这些源目前未固定发行版/提交**。可复现性与离线构建的取舍见 README「可复现性」。
+pkgname=fcitx5-windinput-git
+pkgver=0.130.1.r41.gc70da4c
+pkgrel=1
+pkgdesc='清风输入法 WindInput — Fcitx5 输入法引擎（Rust 服务 + 自绘候选窗，源码构建）'
+arch=('x86_64')
+url='https://windinput.com'
+# 应用本体 GPL-3.0-or-later；随包词库/数据另适用其各自的第三方许可，见 NOTICE.md。
+license=('GPL-3.0-or-later')
+depends=('glibc' 'gcc-libs' 'fcitx5' 'libxcb' 'wayland' 'glib2' 'fontconfig' 'libxkbcommon' 'hicolor-icon-theme')
+makedepends=('rust' 'cmake' 'pkgconf' 'git' 'curl' 'python' 'fcitx5' 'libxcb' 'wayland' 'glib2' 'fontconfig')
+optdepends=('fcitx5-gtk: GTK 应用的输入法前端'
+            'fcitx5-qt: Qt 应用的输入法前端'
+            'xclip: X11 会话下读写剪贴板'
+            'wl-clipboard: Wayland 会话下读写剪贴板'
+            'xdg-utils: 打开链接/路径'
+            'xdg-desktop-portal: 设置程序的文件对话框'
+            'zenity: 文件对话框回退（无门户时）'
+            'noto-fonts-cjk: 中文候选字体'
+            'noto-fonts-emoji: emoji 候选字形')
+# 本包提供的东西与社区重打包的二进制包 fcitx5-windinput-bin 相同，二者不可共存。
+provides=('fcitx5-windinput')
+conflicts=('fcitx5-windinput-bin')
+options=('!lto')  # makepkg 的 lto 会把 -flto 注入 CFLAGS，使 ring 的 C/汇编成 LTO IR 而 rustc 链接不带 -flto，导致符号未定义；关掉即可
+# 上游发行版二进制带调试符号且体积大；Arch 默认 strip 即可。
+source=("WindInput::git+https://github.com/huanfeng/WindInput.git#branch=main"
+        "wind-setting::git+https://github.com/huanfeng/wind-setting.git#branch=main"
+        "wind-ui-rust::git+https://github.com/huanfeng/wind-ui-rust.git#branch=main")
+sha256sums=('SKIP' 'SKIP' 'SKIP')
+
+# docs/VERSION 只写产品版本号（去掉 -git 的 rNNN.gHASH 后缀），供构建期 stamp 与设置程序。
+_appver() { printf '%s' "${pkgver%%.r*}"; }
+
+pkgver() {
+  cd "$srcdir/WindInput"
+  git describe --long --tags --abbrev=7 2>/dev/null \
+    | sed 's/^v//; s/\([^-]*-g\)/r\1/; s/-/./g'
+}
+
+build() {
+  cd "$srcdir/WindInput"
+
+  # 版本真源：上游 CI 用 tag 覆盖它，本地构建读它。git 检出里它是开发占位值。
+  printf '%s' "$(_appver)" > docs/VERSION
+
+  # gen-data 默认会转发到 Windows 编译机；本机（Linux）就地跑词库数据本就不受
+  # “本机产物不可发版”限制（那条限制只针对 cargo-xwin 交叉编的 exe/dll）。
+  export WIND_BUILD_LOCAL=1
+
+  # 1) 组装运行时词库数据 → build_dev/data（下载第三方词库 + 生成派生表）。
+  #    这一步需要 git、curl、python3（注释词库生成）与 Rust 工具链。
+  bash scripts/dev.sh gd
+
+  # 2) Rust 服务（引擎本体，Linux 宿主形态）。
+  ( cd wind_input && cargo build --release -p wind_service --features linux-host )
+
+  # 3) 图形设置程序（独立仓库，兄弟目录布局见文件头）。
+  ( cd "$srcdir/wind-setting" \
+      && WIND_APP_VERSION="$(_appver)" cargo build --release )
+
+  # 4) Fcitx5 addon（C++/CMake）。Arch 的 fcitx5 5.1.x 头文件需 C++20，CMake 会自动探测升级。
+  cmake -S wind_linux -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+  cmake --build build --parallel
+}
+
+package() {
+  cd "$srcdir/WindInput"
+
+  # 服务与运行时数据同目录：服务按可执行文件同目录的 data/ 定位（与 .deb 相同）。
+  install -Dm755 wind_input/target/release/wind_input "$pkgdir/usr/lib/windinput/wind_input"
+  install -d "$pkgdir/usr/lib/windinput/data"
+  cp -a build_dev/data/. "$pkgdir/usr/lib/windinput/data/"
+
+  # 应用兼容规则是平台专属策略：Windows 版 compat.toml 里的内置规则对 Linux 无意义，
+  # 换成“字段说明 + 零条内置规则”的 Linux 版（生成脚本自检不得残留规则表）。
+  bash scripts/lib/gen-compat.sh linux \
+    build_dev/data/compat.toml "$pkgdir/usr/lib/windinput/data/compat.toml"
+
+  # 设置程序（addon 的 SettingsLauncher 默认找 /usr/lib/windinput/wind_setting）。
+  install -Dm755 "$srcdir/wind-setting/target/release/wind_setting" \
+    "$pkgdir/usr/lib/windinput/wind_setting"
+
+  # addon 库、addon/inputmethod 描述与图标由 CMake 按 GNUInstallDirs 安装：
+  #   /usr/lib/fcitx5/libwindinput.so
+  #   /usr/share/fcitx5/{addon,inputmethod}/windinput.conf
+  #   /usr/share/icons/hicolor/...（windinput 系列图标）
+  # 若探测到 gio-2.0（Wayland + GNOME 光标扩展客户端），还会装 GNOME Shell 扩展。
+  DESTDIR="$pkgdir" cmake --install build
+
+  # 应用菜单入口、windinput:// 协议与 .wpkg/.wtheme 文件类型关联。
+  install -Dm644 scripts/linux/pkg/windinput-setting.desktop \
+    "$pkgdir/usr/share/applications/windinput-setting.desktop"
+  install -Dm644 scripts/linux/pkg/windinput-import.desktop \
+    "$pkgdir/usr/share/applications/windinput-import.desktop"
+  install -Dm644 scripts/linux/pkg/windinput-mime.xml \
+    "$pkgdir/usr/share/mime/packages/windinput.xml"
+
+  # 文档与许可证。NOTICE.md 逐条列明随包第三方词库/数据的来源与许可。
+  install -Dm644 wind_linux/README.md "$pkgdir/usr/share/doc/windinput/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 NOTICE.md "$pkgdir/usr/share/licenses/$pkgname/NOTICE.md"
+
+  # Debian 的 postinst/postrm（结束旧 wind_input 服务）不搬：pacman 不做进程管理。
+  # 升级后由 addon 自动拉起新版服务；已加载进 fcitx5 的旧 addon 需 `fcitx5 -rd` 或重新登录。
+}

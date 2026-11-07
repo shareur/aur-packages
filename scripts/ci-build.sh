@@ -28,9 +28,29 @@ done
 if [[ $package == 115life-desktop-bin ]]; then
     runuser -u builder -- timeout 45s dbus-run-session -- xvfb-run -a \
         bash "$root/scripts/smoke-115life-desktop.sh" > "$root/reports/$package/smoke.log" 2>&1
+elif [[ $package == 115life-browser-bin ]]; then
+    runuser -u builder -- /usr/bin/115life-browser --version > "$root/reports/$package/version.txt"
+elif [[ $package == rustdesk-unattended-wayland ]]; then
+    runuser -u builder -- /usr/bin/rustdesk --version > "$root/reports/$package/version.txt"
+elif [[ $package == chatgpt-bin ]]; then
+    runuser -u builder -- /usr/bin/chatgpt --version > "$root/reports/$package/version.txt"
 fi
 pacman -R --noconfirm "${names[@]}"
 if [[ $package == 115life-desktop-bin ]]; then
     [[ ! -e /opt/115life && ! -L /usr/bin/115life-desktop && ! -L /usr/bin/115pan && ! -L /usr/bin/115life ]]
     [[ ! -e /usr/share/applications/life115.desktop ]]
+fi
+if [[ $package == 115life-browser-bin ]]; then
+    [[ ! -e /opt/115Browser && ! -L /usr/bin/115life-browser ]]
+    [[ ! -e /usr/share/applications/115Browser.desktop ]]
+fi
+if [[ $package == rustdesk-unattended-wayland ]]; then
+    [[ ! -e /usr/lib/rustdesk && ! -L /usr/bin/rustdesk ]]
+    [[ ! -e /usr/lib/systemd/system/rustdesk.service ]]
+    [[ ! -e /usr/share/applications/rustdesk.desktop ]]
+fi
+if [[ $package == chatgpt-bin ]]; then
+    [[ ! -e /usr/lib/chatgpt && ! -L /usr/bin/chatgpt ]]
+    [[ ! -e /usr/share/applications/chatgpt.desktop ]]
+    [[ ! -e /usr/share/pixmaps/chatgpt.png ]]
 fi

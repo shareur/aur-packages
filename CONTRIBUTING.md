@@ -90,3 +90,8 @@ CI builds changed packages in a disposable Arch container, then checks installat
 ## License
 
 By contributing, you agree that repository-authored content is licensed under the MIT license in LICENSE, and that you have the right to submit it.
+
+## Validation conventions
+
+- For VCS (`-git`) packages the `.SRCINFO` comparison ignores the `pkgver` line, because that value moves with upstream; all other metadata is still compared strictly.
+- Packages named `*-debug` that `makepkg` generates under the `debug` option are excluded from lint and package checks; their `/usr/lib/debug/.build-id` symlinks point into the main package.

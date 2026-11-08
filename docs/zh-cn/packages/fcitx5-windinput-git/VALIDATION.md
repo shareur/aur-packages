@@ -13,3 +13,4 @@
 - 未运行：整体 scripts/validate.sh、namcap、scripts/test-local-install.sh。validate.sh 以 pacman 包检查依赖并运行 namcap，test-local-install.sh 通过 sudo 安装到宿主；二者在无法安装 root 包时都跑不了。这些留给 CI 的 archlinux base-devel 容器。
 - 未测试：经 Fcitx5 的实际交互输入、X11 与 Wayland 候选窗渲染、GNOME Shell 扩展启用、桌面会话集成、Fcitx5 运行中升级的行为、以及可复现构建。
 - 提交 78e7a11 的 CI 失败发生在 namcap 步骤，而非构建。Arch 默认的 makepkg.conf 启用 debug，于是同时生成了 fcitx5-windinput-git-debug 包；namcap 判定其 /usr/lib/debug/.build-id 软链指向不存在的文件，因为这些软链指向主包内的二进制，而当时主包未安装。现已在 options 中关闭 debug，不再生成调试包；已用启用 debug 的 makepkg.conf 验证 makepkg --packagelist 只列出主包。日志中的 gdb-add-index No debugging symbols 警告无害，关闭 debug 后也不再出现。
+- CI 确认：修复已由 GitHub Actions 运行 42453303478（提交 d961622）验证通过；fcitx5-windinput-git 的构建、lint、安装、冒烟与卸载均通过。

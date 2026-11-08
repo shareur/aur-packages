@@ -20,9 +20,11 @@ for package in "$@"; do
         makepkg --force --verifysource
         makepkg --force --noconfirm
         makepkg --printsrcinfo > "$reports/SRCINFO.generated"
-        diff -u .SRCINFO "$reports/SRCINFO.generated"
+        # VCS 包的 pkgver 由 pkgver() 从上游实时计算；提交的 .SRCINFO 只是快照，上游一更新就会不同。此处忽略 pkgver 行，其余元数据仍严格比较。
+        if grep -qF "pkgver()" PKGBUILD; then diff -u <(grep -vF "pkgver = " .SRCINFO) <(grep -vF "pkgver = " "$reports/SRCINFO.generated"); else diff -u .SRCINFO "$reports/SRCINFO.generated"; fi
         [[ $(awk '$1 == "pkgbase" && $2 == "=" {print $3}' .SRCINFO) == "$package" ]]
-        mapfile -t archives < <(makepkg --packagelist)
+        # makepkg 在 debug 选项下会额外生成 -debug 包；其 /usr/lib/debug/.build-id 软链指向主包里的二进制，主包未安装时 namcap 会误报 dangling symlink。AUR 不发布调试包，统一只校验主包。
+        mapfile -t archives < <(makepkg --packagelist | grep -vF -- "-debug-")
         (( ${#archives[@]} > 0 ))
         namcap PKGBUILD "${archives[@]}" 2>&1 | tee "$reports/namcap.log"
         # Vendor /opt layout waiver is scoped to this package only.

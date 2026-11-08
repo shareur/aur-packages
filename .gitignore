@@ -12,3 +12,6 @@ __pycache__/
 
 # Keep agent instructions local at any directory depth.
 [Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd]
+
+# local CI/download logs (not committed)
+/logs/

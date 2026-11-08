@@ -84,3 +84,14 @@ desktop app; fcitx5-windinput-git is the WindInput (清风输入法) Fcitx5 inpu
 method. The first four repackage upstream binaries without compiling source; the
 WindInput recipe builds the engine, its Fcitx5 addon and its runtime data from
 source. See each package guide for test status.
+
+## Contributing, security, and license
+
+- Contribution guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Security policy and private reporting: [SECURITY.md](SECURITY.md)
+- Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- License: [LICENSE](LICENSE) (MIT for repository-authored recipes, scripts and documents; third-party applications and bundled components keep their own licenses)
+- Automation and publishing plan: [docs/automation.md](docs/automation.md)
+- Chinese versions: [docs/zh-cn/](docs/zh-cn/)
+
+Repository layout: `packages/<pkgbase>/` holds recipes and package guides, `scripts/` holds shared tooling, `.github/workflows/` holds CI, and `docs/` holds project documentation. Each package keeps its own `README.md` and `VALIDATION.md`.

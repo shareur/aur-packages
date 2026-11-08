@@ -61,3 +61,14 @@ AUR 注册恢复后，核对账号权限与包名，再按
 rustdesk-unattended-wayland 为 RustDesk 面向无人值守访问的 Wayland 构建，
 chatgpt-bin 为 OpenAI 的 ChatGPT 桌面应用。
 前四者重打包上游预编译二进制；fcitx5-windinput-git 从源码构建。当前仓库包含五个独立配方。
+
+## 贡献、安全与许可
+
+- 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)
+- 安全策略与私下报告：[SECURITY.md](SECURITY.md)
+- 行为准则：[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- 许可证：[LICENSE](../../LICENSE)（仓库自有配方、脚本与文档为 MIT；第三方软件及随包组件保留各自许可证）
+- 发布流程：[自动化与发布说明](../automation.md)
+- 英文原文位于仓库根目录。
+
+仓库结构：`packages/<pkgbase>/` 存放配方与包说明，`scripts/` 存放共享工具，`.github/workflows/` 存放 CI，`docs/` 存放项目文档；每个包含自己的 `README.md` 与 `VALIDATION.md`。

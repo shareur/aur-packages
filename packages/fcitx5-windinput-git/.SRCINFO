@@ -37,6 +37,7 @@ pkgbase = fcitx5-windinput-git
 	provides = fcitx5-windinput
 	conflicts = fcitx5-windinput-bin
 	options = !lto
+	options = !debug
 	source = WindInput::git+https://github.com/huanfeng/WindInput.git#branch=main
 	source = wind-setting::git+https://github.com/huanfeng/wind-setting.git#branch=main
 	source = wind-ui-rust::git+https://github.com/huanfeng/wind-ui-rust.git#branch=main

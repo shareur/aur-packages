@@ -36,7 +36,8 @@ optdepends=('fcitx5-gtk: GTK 应用的输入法前端'
 # 本包提供的东西与社区重打包的二进制包 fcitx5-windinput-bin 相同，二者不可共存。
 provides=('fcitx5-windinput')
 conflicts=('fcitx5-windinput-bin')
-options=('!lto')  # makepkg 的 lto 会把 -flto 注入 CFLAGS，使 ring 的 C/汇编成 LTO IR 而 rustc 链接不带 -flto，导致符号未定义；关掉即可
+# !debug: makepkg 会额外生成 -debug 包，其 /usr/lib/debug/.build-id 软链指向主包里的二进制；主包未安装时 namcap 报 dangling symlink（CI 因此失败）。AUR 不发布调试包，故关闭。
+options=('!lto' '!debug')  # makepkg 的 lto 会把 -flto 注入 CFLAGS，使 ring 的 C/汇编成 LTO IR 而 rustc 链接不带 -flto，导致符号未定义；关掉即可
 # 上游发行版二进制带调试符号且体积大；Arch 默认 strip 即可。
 source=("WindInput::git+https://github.com/huanfeng/WindInput.git#branch=main"
         "wind-setting::git+https://github.com/huanfeng/wind-setting.git#branch=main"
